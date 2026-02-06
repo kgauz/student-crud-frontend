@@ -28,6 +28,10 @@ function App() {
   // Handle form submit (create or update)
   const submit = async (e) => {
   e.preventDefault();
+    if (!/^[a-zA-Z\s]+$/.test(form.fullName)) {
+    alert("Full name must contain only letters and spaces.");
+    return;
+  }
   setLoading(true);
 
   try {
@@ -92,13 +96,20 @@ function App() {
         marginBottom: 30
       }}>
         <form onSubmit={submit} style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
-          <input
-            placeholder="Full Name"
-            value={form.fullName}
-            onChange={(e) => setForm({ ...form, fullName: e.target.value })}
-            style={{ flex: "1 1 200px", padding: 10, borderRadius: 5, border: "1px solid #ccc" }}
-            required
-          />
+         <input
+			  placeholder="Full Name"
+			  value={form.fullName}
+			  onChange={(e) => {
+			    const value = e.target.value;
+			
+			    // Allow only letters and spaces
+			    if (/^[a-zA-Z\s]*$/.test(value)) {
+			      setForm({ ...form, fullName: value });
+			    }
+			  }}
+			  style={{ flex: "1 1 200px", padding: 10, borderRadius: 5, border: "1px solid #ccc" }}
+			  required
+			/>
           <input
             placeholder="Email"
             value={form.email}

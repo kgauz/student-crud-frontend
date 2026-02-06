@@ -7,6 +7,8 @@ function App() {
   const [students, setStudents] = useState([]);
   const [form, setForm] = useState({ fullName: "", email: "", course: "" });
   const [editingId, setEditingId] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [deletingId, setDeletingId] = useState(null);
 
   // Fetch all students
   const fetchStudents = async () => {
@@ -25,8 +27,10 @@ function App() {
 
   // Handle form submit (create or update)
   const submit = async (e) => {
-    e.preventDefault();
+  e.preventDefault();
+  setLoading(true);
 
+  try {
     if (editingId) {
       await fetch(`${API_URL}/${editingId}`, {
         method: "PUT",
@@ -44,14 +48,27 @@ function App() {
 
     setForm({ fullName: "", email: "", course: "" });
     fetchStudents();
-  };
+  } catch (err) {
+    console.error("Failed to submit:", err);
+  } finally {
+    setLoading(false);
+  }
+};
 
-  const remove = async (id) => {
-    if (window.confirm("Are you sure you want to delete this student?")) {
-      await fetch(`${API_URL}/${id}`, { method: "DELETE" });
-      fetchStudents();
-    }
-  };
+ const remove = async (id) => {
+  if (!window.confirm("Are you sure you want to delete this student?")) return;
+
+  setDeletingId(id);
+
+  try {
+    await fetch(`${API_URL}/${id}`, { method: "DELETE" });
+    fetchStudents();
+  } catch (err) {
+    console.error("Delete failed:", err);
+  } finally {
+    setDeletingId(null);
+  }
+};
 
   const startEdit = (student) => {
     setEditingId(student._id);
@@ -97,16 +114,26 @@ function App() {
             style={{ flex: "1 1 150px", padding: 10, borderRadius: 5, border: "1px solid #ccc" }}
             required
           />
-          <button type="submit" style={{
-            padding: "10px 20px",
-            borderRadius: 5,
-            border: "none",
-            backgroundColor: "#007bff",
-            color: "white",
-            cursor: "pointer"
-          }}>
-            {editingId ? "Update Student" : "Add Student"}
-          </button>
+          <button
+	  type="submit"
+	  disabled={loading}
+	  style={{
+	    padding: "10px 20px",
+	    borderRadius: 5,
+	    border: "none",
+	    backgroundColor: loading ? "#9ec5fe" : "#007bff",
+	    color: "white",
+	    cursor: loading ? "not-allowed" : "pointer",
+	  }}
+	  >
+	  {loading
+	    ? editingId
+	      ? "Updating..."
+	      : "Adding..."
+	    : editingId
+	    ? "Update Student"
+	    : "Add Student"}
+	</button>
           {editingId && (
             <button
               type="button"
@@ -162,18 +189,19 @@ function App() {
                     Edit
                   </button>
                   <button
-                    onClick={() => remove(s._id)}
-                    style={{
-                      padding: "5px 10px",
-                      borderRadius: 5,
-                      border: "none",
-                      backgroundColor: "#dc3545",
-                      color: "white",
-                      cursor: "pointer"
-                    }}
-                  >
-                    Delete
-                  </button>
+		  onClick={() => remove(s._id)}
+		  disabled={deletingId === s._id}
+		  style={{
+		    padding: "5px 10px",
+		    borderRadius: 5,
+		    border: "none",
+		    backgroundColor: deletingId === s._id ? "#f5a5ad" : "#dc3545",
+		    color: "white",
+		    cursor: deletingId === s._id ? "not-allowed" : "pointer",
+		  }}
+		>
+		  {deletingId === s._id ? "Deleting..." : "Delete"}
+		</button>
                 </td>
               </tr>
             ))}
@@ -185,4 +213,3 @@ function App() {
 }
 
 export default App;
-
